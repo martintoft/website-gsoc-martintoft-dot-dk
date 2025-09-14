@@ -1,0 +1,86 @@
+Fixes this bug:
+
+    More-prompt is skipped when doing this; (Randall W. Morris, Jun 17)
+        :au
+        <Space>
+        b
+        <Space>
+
+The bug can be triggered by every listing that calls do_more_prompt() in
+message.c, i.e. also ":version", ":ls", ":highlight", etc.  The reported key
+sequence for triggering the bug is far from the only one.
+
+A wrong conditional in the scrolling system of message.c causes the trouble.
+When scrolling downwards, the code at message.c:2613-2622 get as many lines
+from the scroll list as needed (scroll > 0) or possible (mp_last != NULL).
+scroll is the number of lines to scroll down, and mp_last is a pointer to the
+scroll list.  This is necessary, as a caller of the message output functions
+will only generate its output once.  For that reason, if the user has scrolled
+all the way to the bottom, subsequently all lines will be fetched from the
+scroll list.  If all required lines were fetched from the scroll list (scroll
+has become zero), or the scroll action is upwards (scroll was set to a negative
+number in the switch statement), the conditional of the statement at
+message.c:2625 should evaluate to true and have the more-prompt displayed
+again.  Unfortunately, the event of scroll being zero can only make the
+conditional true if we are not at the end of the scroll list (mp_last != NULL),
+triggering the bug.  I have corrected the conditional such that it does not
+depend on the advancement of the scroll list.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/message.c
+===================================================================
+*** src/message.c	(revision 343)
+--- src/message.c	(working copy)
+***************
+*** 1878,1884 ****
+  		/* output postponed text */
+  		t_puts(&t_col, t_s, s, attr);
+  
+! 	    /* When no more prompt an no more room, truncate here */
+  	    if (msg_no_more && lines_left == 0)
+  		break;
+  
+--- 1878,1884 ----
+  		/* output postponed text */
+  		t_puts(&t_col, t_s, s, attr);
+  
+! 	    /* When no more prompt and no more room, truncate here */
+  	    if (msg_no_more && lines_left == 0)
+  		break;
+  
+***************
+*** 2234,2240 ****
+  {
+      msgchunk_T	*mp;
+  
+!     /* Only show somethign if there is more than one line, otherwise it looks
+       * weird, typing a command without output results in one line. */
+      mp = msg_sb_start(last_msgchunk);
+      if (mp == NULL || mp->sb_prev == NULL)
+--- 2234,2240 ----
+  {
+      msgchunk_T	*mp;
+  
+!     /* Only show something if there is more than one line, otherwise it looks
+       * weird, typing a command without output results in one line. */
+      mp = msg_sb_start(last_msgchunk);
+      if (mp == NULL || mp->sb_prev == NULL)
+***************
+*** 2622,2628 ****
+  		}
+  	    }
+  
+! 	    if (scroll < 0 || (scroll == 0 && mp_last != NULL))
+  	    {
+  		/* displayed the requested text, more prompt again */
+  		screen_fill((int)Rows - 1, (int)Rows, 0,
+--- 2622,2628 ----
+  		}
+  	    }
+  
+! 	    if (scroll <= 0)
+  	    {
+  		/* displayed the requested text, more prompt again */
+  		screen_fill((int)Rows - 1, (int)Rows, 0,

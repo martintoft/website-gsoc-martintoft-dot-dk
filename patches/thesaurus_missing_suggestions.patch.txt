@@ -1,0 +1,74 @@
+Fixes this bug:
+
+    Not all words in the line of a 'thesaurus' completion file are suggested
+    when using 'thesaurus' completion, only the matched word and the words that
+    follow after it.
+
+    Example:
+        1. Create a file with the line "angry furious mad enraged".
+        2. Use it for 'thesaurus' completion, :set thesaurus=filename
+        3. Type "fur<CTRL-X CTRL-T>"  (without letting go of CTRL)
+        4. Only "furious", "mad" and "enraged" are suggested -- not "angry".
+
+The solution is to start the 'thesaurus' word scan from the beginning of the
+line.  Also, the matched word must be skipped in the scan, as it has been added
+to the suggestion list earlier.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/edit.c
+===================================================================
+*** src/edit.c	(revision 359)
+--- src/edit.c	(working copy)
+***************
+*** 2842,2847 ****
+--- 2842,2848 ----
+  			/*
+  			 * Add the other matches on the line
+  			 */
++ 			ptr = buf;
+  			while (!got_int)
+  			{
+  			    /* Find start of the next word.  Skip white
+***************
+*** 2851,2857 ****
+  				break;
+  			    wstart = ptr;
+  
+! 			    /* Find end of the word and add it. */
+  #ifdef FEAT_MBYTE
+  			    if (has_mbyte)
+  				/* Japanese words may have characters in
+--- 2852,2858 ----
+  				break;
+  			    wstart = ptr;
+  
+! 			    /* Find end of the word. */
+  #ifdef FEAT_MBYTE
+  			    if (has_mbyte)
+  				/* Japanese words may have characters in
+***************
+*** 2868,2876 ****
+  			    else
+  #endif
+  				ptr = find_word_end(ptr);
+! 			    add_r = ins_compl_add_infercase(wstart,
+! 				    (int)(ptr - wstart),
+! 				    p_ic, files[i], *dir, 0);
+  			}
+  		    }
+  		    if (add_r == OK)
+--- 2869,2880 ----
+  			    else
+  #endif
+  				ptr = find_word_end(ptr);
+! 
+! 			    /* Add the word. Skip the regexp match. */
+! 			    if (wstart != regmatch->startp[0])
+! 				add_r = ins_compl_add_infercase(wstart,
+! 					(int)(ptr - wstart),
+! 					p_ic, files[i], *dir, 0);
+  			}
+  		    }
+  		    if (add_r == OK)

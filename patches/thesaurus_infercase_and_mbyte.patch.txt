@@ -1,0 +1,236 @@
+Fixes this bug:
+
+    'thesaurus' doesn't work when 'infercase' is set. (Mohsin, 2006 May 30)
+
+When doing ordinary word completion, where all of the completion suggestions
+begin with the typed part, it is okay to infer the original case of the typed
+part by simply copying it into each suggestion.  This is, however, not okay
+when looking up words for the thesaurus, where the suggestions do not always
+begin with the typed part.  The correct action, which this patch brings in, is
+to check the case of each character in the typed part and change each
+character's case in the suggestion accordingly.
+
+This patch also makes the affected function, ins_compl_add_infercase(), work
+for multi-byte characters.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/edit.c
+===================================================================
+*** src/edit.c	(revision 359)
+--- src/edit.c	(working copy)
+***************
+*** 2057,2063 ****
+   * case of the originally typed text is used, and the case of the completed
+   * text is inferred, ie this tries to work out what case you probably wanted
+   * the rest of the word to be in -- webb
+-  * TODO: make this work for multi-byte characters.
+   */
+      int
+  ins_compl_add_infercase(str, len, icase, fname, dir, flags)
+--- 2057,2062 ----
+***************
+*** 2068,2121 ****
+      int		dir;
+      int		flags;
+  {
+      int		has_lower = FALSE;
+      int		was_letter = FALSE;
+-     int		idx;
+  
+!     if (p_ic && curbuf->b_p_inf && len < IOSIZE)
+      {
+! 	/* Infer case of completed part -- webb */
+! 	/* Use IObuff, str would change text in buffer! */
+! 	vim_strncpy(IObuff, str, len);
+  
+! 	/* Rule 1: Were any chars converted to lower? */
+! 	for (idx = 0; idx < compl_length; ++idx)
+  	{
+! 	    if (islower(compl_orig_text[idx]))
+  	    {
+! 		has_lower = TRUE;
+! 		if (isupper(IObuff[idx]))
+! 		{
+! 		    /* Rule 1 is satisfied */
+! 		    for (idx = compl_length; idx < len; ++idx)
+! 			IObuff[idx] = TOLOWER_LOC(IObuff[idx]);
+! 		    break;
+! 		}
+  	    }
+  	}
+  
+! 	/*
+! 	 * Rule 2: No lower case, 2nd consecutive letter converted to
+! 	 * upper case.
+! 	 */
+! 	if (!has_lower)
+  	{
+! 	    for (idx = 0; idx < compl_length; ++idx)
+  	    {
+! 		if (was_letter && isupper(compl_orig_text[idx])
+! 						      && islower(IObuff[idx]))
+  		{
+! 		    /* Rule 2 is satisfied */
+! 		    for (idx = compl_length; idx < len; ++idx)
+! 			IObuff[idx] = TOUPPER_LOC(IObuff[idx]);
+! 		    break;
+  		}
+- 		was_letter = isalpha(compl_orig_text[idx]);
+  	    }
+- 	}
+  
+! 	/* Copy the original case of the part we typed */
+! 	STRNCPY(IObuff, compl_orig_text, compl_length);
+  
+  	return ins_compl_add(IObuff, len, icase, fname, NULL, dir,
+  								flags, FALSE);
+--- 2067,2213 ----
+      int		dir;
+      int		flags;
+  {
++     char_u	*p;
++     int		i, c;
++     int		actual_len;		/* Take multi-byte characters */
++     int		actual_compl_length;	/* into account. */
++     int		*wca;		        /* Wide character array. */
+      int		has_lower = FALSE;
+      int		was_letter = FALSE;
+  
+!     if (p_ic && curbuf->b_p_inf)
+      {
+! 	/* Infer case of completed part. */
+  
+! 	/* Find actual length of completion. */
+! #ifdef FEAT_MBYTE
+! 	if (has_mbyte)
+  	{
+! 	    p = str;
+! 	    actual_len = 0;
+! 	    while (*p != NUL)
+  	    {
+! 		mb_ptr_adv(p);
+! 		++actual_len;
+  	    }
+  	}
++ 	else
++ #endif
++ 	    actual_len = len;
+  
+! 	/* Find actual length of original text. */
+! #ifdef FEAT_MBYTE
+! 	if (has_mbyte)
+  	{
+! 	    p = compl_orig_text;
+! 	    actual_compl_length = 0;
+! 	    while (*p != NUL)
+  	    {
+! 		mb_ptr_adv(p);
+! 		++actual_compl_length;
+! 	    }
+! 	}
+! 	else
+! #endif
+! 	    actual_compl_length = compl_length;
+! 
+! 	/* Allocate wide character array for the completion and fill it. */
+! 	wca = (int *)alloc(actual_len * sizeof(int));
+! 	if (wca != NULL)
+! 	{
+! 	    p = str;
+! 	    for (i = 0; i < actual_len; ++i)
+! #ifdef FEAT_MBYTE
+! 		if (has_mbyte)
+! 		    wca[i] = mb_ptr2char_adv(&p);
+! 		else
+! #endif
+! 		    wca[i] = *(p++);
+! 
+! 	    /* Rule 1: Were any chars converted to lower? */
+! 	    p = compl_orig_text;
+! 	    for (i = 0; i < actual_compl_length; ++i)
+! 	    {
+! #ifdef FEAT_MBYTE
+! 		if (has_mbyte)
+! 		    c = mb_ptr2char_adv(&p);
+! 		else
+! #endif
+! 		    c = *(p++);
+! 		if (MB_ISLOWER(c))
+  		{
+! 		    has_lower = TRUE;
+! 		    if (MB_ISUPPER(wca[i]))
+! 		    {
+! 			/* Rule 1 is satisfied. */
+! 			for (i = actual_compl_length; i < actual_len; ++i)
+! 			    wca[i] = MB_TOLOWER(wca[i]);
+! 			break;
+! 		    }
+  		}
+  	    }
+  
+! 	    /*
+! 	     * Rule 2: No lower case, 2nd consecutive letter converted to
+! 	     * upper case.
+! 	     */
+! 	    if (!has_lower)
+! 	    {
+! 		p = compl_orig_text;
+! 		for (i = 0; i < actual_compl_length; ++i)
+! 		{
+! #ifdef FEAT_MBYTE
+! 		    if (has_mbyte)
+! 			c = mb_ptr2char_adv(&p);
+! 		    else
+! #endif
+! 			c = *(p++);
+! 		    if (was_letter && MB_ISUPPER(c) && MB_ISLOWER(wca[i]))
+! 		    {
+! 			/* Rule 2 is satisfied. */
+! 			for (i = actual_compl_length; i < actual_len; ++i)
+! 			    wca[i] = MB_TOUPPER(wca[i]);
+! 			break;
+! 		    }
+! 		    was_letter = MB_ISLOWER(c) || MB_ISUPPER(c);
+! 		}
+! 	    }
+! 
+! 	    /* Copy the original case of the part we typed. */
+! 	    p = compl_orig_text;
+! 	    for (i = 0; i < actual_compl_length; ++i)
+! 	    {
+! #ifdef FEAT_MBYTE
+! 		if (has_mbyte)
+! 		    c = mb_ptr2char_adv(&p);
+! 		else
+! #endif
+! 		    c = *(p++);
+! 		if (MB_ISLOWER(c))
+! 		    wca[i] = MB_TOLOWER(wca[i]);
+! 		else if (MB_ISUPPER(c))
+! 		    wca[i] = MB_TOUPPER(wca[i]);
+! 	    }
+! 
+! 	    /* 
+! 	     * Generate encoding specific output from wide character array.
+! 	     * Multi-byte characters can occupy up to five bytes more than
+! 	     * ASCII characters, and we also need one byte for NUL, so stay
+! 	     * six bytes away from the edge of IObuff.
+! 	     */
+! 	    p = IObuff;
+! 	    i = 0;
+! 	    while (i < actual_len && (p - IObuff + 6) < IOSIZE)
+! #ifdef FEAT_MBYTE
+! 		if (has_mbyte)
+! 		    p += mb_char2bytes(wca[i++], p);
+! 		else
+! #endif
+! 		    *(p++) = wca[i++];
+! 	    *p = NUL;
+! 
+! 	    vim_free(wca);
+! 	}
+  
+  	return ins_compl_add(IObuff, len, icase, fname, NULL, dir,
+  								flags, FALSE);

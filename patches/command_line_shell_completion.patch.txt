@@ -1,0 +1,117 @@
+Fixes this bug:
+
+    Command line completion for shell commands: "cat </tmp/file" doesn't
+    complete, start the file name at the "<".
+
+Solution:  Treat all characters that are invalid file name characters the same
+way as white space.  vim_isfilec() is the judge.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/ex_docmd.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/ex_docmd.c,v
+retrieving revision 1.129
+diff -c -r1.129 ex_docmd.c
+*** src/ex_docmd.c	11 Aug 2007 14:00:04 -0000	1.129
+--- src/ex_docmd.c	14 Aug 2007 02:01:34 -0000
+***************
+*** 3281,3286 ****
+--- 3281,3287 ----
+  
+      if (ea.argt & XFILE)
+      {
++ 	int c;
+  	int in_quote = FALSE;
+  	char_u *bow = NULL;	/* Beginning of word */
+  
+***************
+*** 3289,3319 ****
+  	 * being expanded.
+  	 */
+  	xp->xp_pattern = skipwhite(arg);
+! 	for (p = xp->xp_pattern; *p; )
+  	{
+! 	    if (*p == '\\' && p[1] != NUL)
+  		++p;
+  #ifdef SPACE_IN_FILENAME
+! 	    else if (vim_iswhite(*p) && (!(ea.argt & NOSPC) || usefilter))
+  #else
+! 	    else if (vim_iswhite(*p))
+  #endif
+  	    {
+! 		p = skipwhite(p);
+  		if (in_quote)
+  		    bow = p;
+  		else
+  		    xp->xp_pattern = p;
+! 		--p;
+! 	    }
+! 	    else if (*p == '`')
+! 	    {
+! 		if (!in_quote)
+! 		{
+! 		    xp->xp_pattern = p;
+! 		    bow = p + 1;
+! 		}
+! 		in_quote = !in_quote;
+  	    }
+  	    mb_ptr_adv(p);
+  	}
+--- 3290,3344 ----
+  	 * being expanded.
+  	 */
+  	xp->xp_pattern = skipwhite(arg);
+! 	p = xp->xp_pattern;
+! 	while (*p != NUL)
+  	{
+! #ifdef FEAT_MBYTE
+! 	    if (has_mbyte)
+! 		c = mb_ptr2char(p);
+! 	    else
+! #endif
+! 		c = *p;
+! 	    if (c == '\\' && p[1] != NUL)
+  		++p;
++ 	    else if (c == '`')
++ 	    {
++ 		if (!in_quote)
++ 		{
++ 		    xp->xp_pattern = p;
++ 		    bow = p + 1;
++ 		}
++ 		in_quote = !in_quote;
++ 	    }
+  #ifdef SPACE_IN_FILENAME
+! 	    else if (!vim_isfilec(c) && (!(ea.argt & NOSPC) || usefilter))
+  #else
+! 	    else if (!vim_isfilec(c))
+  #endif
+  	    {
+! 		while (*p != NUL)
+! 		{
+! #ifdef FEAT_MBYTE
+! 		    if (has_mbyte)
+! 			c = mb_ptr2char(p);
+! 		    else
+! #endif
+! 			c = *p;
+! 		    if (c == '`' || vim_isfilec(c))
+! 			break;
+! #ifdef FEAT_MBYTE
+! 		    if (has_mbyte)
+! 			len = (*mb_ptr2len)(p);
+! 		    else
+! #endif
+! 			len = 1;
+! 		    mb_ptr_adv(p);
+! 		}
+  		if (in_quote)
+  		    bow = p;
+  		else
+  		    xp->xp_pattern = p;
+! 		p -= len;
+  	    }
+  	    mb_ptr_adv(p);
+  	}

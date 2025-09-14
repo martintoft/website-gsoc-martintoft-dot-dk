@@ -1,0 +1,60 @@
+Title: Vim bug fixing
+Student: Martin Toft Bay
+Mentor: Abraham Moolenaar
+
+Abstract:
+
+The many features of Vim makes it a really great editor, however, as the list
+of features grow, it is important to keep all of them working flawlessly. Users
+trust Vim when editing even their most important files and must be spared as
+many unpleasant surprises as possible. I have chosen 14 known bugs to focus on
+and categorized them into "General Bugs", "Syntax Highlighting Bugs",
+"Completion Bugs", and "Documentation Bugs". The general bugs that I wish to
+fix are:
+
+M- When setting 'keymap' twice the b:keymap_name variable isn't set. (Milan
+  Berta, 2007 Mar 9) Has something to do with 'iminsert'.
+- ":lockvar" should use copyID to avoid endless loop.
+M- More-prompt is skipped when doing this; (Randall W. Morris, Jun 17)
+    :au
+    <Space>
+    b
+    <Space>
+C- ":confirm w" does give a prompt when 'readonly' is set, but not when the
+  file permissions are read-only. Both can be overruled by ":w!" thus it would
+  be logical to get a prompt for both. (Michael Schaap)
+M- When 'bomb' is set or reset the file should be considered modified. (Tony
+  Mechelynck) Handle like 'endofline'.
+C- ":py" asks for an argument, ":py asd" then gives the error that ":py" isn't
+  implemented. Should already happen for ":py".
+M- Allow more than 3 ":match" items.
+M- When pattern for ":sort" is empty, use last search pattern. Allows trying out
+  the pattern first. (Brian McKee)
+
+Syntax highlighting bugs:
+
+- C syntax: "#define x {" The macro should terminate at the end of the line,
+  not continue in the next line. (Kelvin Lee, 2006 May 24)
+- C syntax: {} inside () causes following {} to be highlighted as error.
+  (Michalis Giannakidis, 2006 Jun 1)
+
+Completion bugs:
+
+- C completion: doesn't work after aa[0]->, where aa is an array of structures.
+  (W. de Hoog, 2006 Aug 12)
+- Completion menu: For a wrapping line, completing a long file name, only the
+  start of the path is shown in the menu. Should move the menu to the right to
+  show more text of the completions. Shorten the items that don't fit in the
+  middle?
+
+Documentation bugs:
+
+- Write "making vim work better" for the docs (mostly pointers): *nice*
+    - sourcing $VIMRUNTIME/vimrc_example.vim
+    - setting 'mouse' to "a"
+    - getting colors in xterm
+    - compiling Vim with X11, GUI, etc.
+- There should be something about spell checking in the user manual.
+
+Some of the bug descriptions are vague and will need to be discussed with
+developers and bug reporters.

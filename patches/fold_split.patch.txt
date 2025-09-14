@@ -1,0 +1,53 @@
+Fixes this bug:
+
+    ":e fold.c" then ":sp fold.c" results in folds of original window to
+    disappear. (Akita Noek)
+
+When reloading a file, Vim re-uses the buffer and in this connection calls
+buffer.c:buf_freeall().  buf_freeall() clears the folds in all windows showing
+the buffer, so we need to restore them by calling fold.c:foldUpdateAll() for
+each window showing the buffer.  Manual folds are not restored, as the file
+might have changed and we don't know whether they are still legal.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/ex_cmds.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/ex_cmds.c,v
+retrieving revision 1.93
+diff -c -r1.93 ex_cmds.c
+*** src/ex_cmds.c	25 Jul 2007 20:56:39 -0000	1.93
+--- src/ex_cmds.c	18 Aug 2007 18:27:49 -0000
+***************
+*** 3584,3592 ****
+  	curwin_init();
+  
+  #ifdef FEAT_FOLDING
+! 	/* It's like all lines in the buffer changed.  Need to update
+  	 * automatic folding. */
+! 	foldUpdateAll(curwin);
+  #endif
+  
+  	/* Change directories when the 'acd' option is set. */
+--- 3584,3603 ----
+  	curwin_init();
+  
+  #ifdef FEAT_FOLDING
+! 	/* It's possible that all lines in the buffer changed.  Need to update
+  	 * automatic folding. */
+! # ifdef FEAT_WINDOWS
+! 	{
+! 	    win_T	    *win;
+! 	    tabpage_T	    *tp;
+! 	    FOR_ALL_TAB_WINDOWS(tp, win)
+! 		if (win->w_buffer == curbuf)
+! 		    foldUpdateAll(win);
+! 	}
+! # else
+! 	if (curwin->w_buffer == curbuf)
+! 	    foldUpdateAll(curwin);
+! # endif
+  #endif
+  
+  	/* Change directories when the 'acd' option is set. */

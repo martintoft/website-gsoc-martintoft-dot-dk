@@ -1,0 +1,95 @@
+Fixes this bug:
+
+    After a ":split" the matchparen highlighting isn't there.
+
+The bug is fixed by installing a WinEnter autocommand.  Additionally, the patch
+introduces "windo" into the NoMatchParen and DoMatchParen commands, such that
+all windows are updated when matchparen is disabled/enabled.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: runtime/doc/pi_paren.txt
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/doc/pi_paren.txt,v
+retrieving revision 1.14
+diff -c -r1.14 pi_paren.txt
+*** runtime/doc/pi_paren.txt	12 May 2007 14:23:41 -0000	1.14
+--- runtime/doc/pi_paren.txt	8 Aug 2007 14:27:23 -0000
+***************
+*** 12,19 ****
+  You can avoid loading this plugin by setting the "loaded_matchparen" variable: >
+  	:let loaded_matchparen = 1
+  
+! The plugin installs CursorMoved autocommands to redefine the match
+! highlighting.
+  
+  To disable the plugin after it was loaded use this command: >
+  
+--- 12,19 ----
+  You can avoid loading this plugin by setting the "loaded_matchparen" variable: >
+  	:let loaded_matchparen = 1
+  
+! The plugin installs CursorMoved, CursorMovedI and WinEnter autocommands to
+! redefine the match highlighting.
+  
+  To disable the plugin after it was loaded use this command: >
+  
+
+Index: runtime/plugin/matchparen.vim
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/plugin/matchparen.vim,v
+retrieving revision 1.14
+diff -c -r1.14 matchparen.vim
+*** runtime/plugin/matchparen.vim	2 Aug 2007 21:00:27 -0000	1.14
+--- runtime/plugin/matchparen.vim	8 Aug 2007 14:27:23 -0000
+***************
+*** 1,6 ****
+  " Vim plugin for showing matching parens
+  " Maintainer:  Bram Moolenaar <Bram@vim.org>
+! " Last Change: 2007 Jul 30
+  
+  " Exit quickly when:
+  " - this plugin was already loaded (or disabled)
+--- 1,6 ----
+  " Vim plugin for showing matching parens
+  " Maintainer:  Bram Moolenaar <Bram@vim.org>
+! " Last Change: 2007 Aug 8
+  
+  " Exit quickly when:
+  " - this plugin was already loaded (or disabled)
+***************
+*** 13,19 ****
+  
+  augroup matchparen
+    " Replace all matchparen autocommands
+!   autocmd! CursorMoved,CursorMovedI * call s:Highlight_Matching_Pair()
+  augroup END
+  
+  " Skip the rest if it was already done.
+--- 13,19 ----
+  
+  augroup matchparen
+    " Replace all matchparen autocommands
+!   autocmd! CursorMoved,CursorMovedI,WinEnter * call s:Highlight_Matching_Pair()
+  augroup END
+  
+  " Skip the rest if it was already done.
+***************
+*** 126,132 ****
+  endfunction
+  
+  " Define commands that will disable and enable the plugin.
+! command! NoMatchParen 3match none | unlet! g:loaded_matchparen | au! matchparen
+! command! DoMatchParen runtime plugin/matchparen.vim | doau CursorMoved
+  
+  let &cpo = cpo_save
+--- 126,133 ----
+  endfunction
+  
+  " Define commands that will disable and enable the plugin.
+! command! NoMatchParen windo 3match none | unlet! g:loaded_matchparen |
+! 	  \ au! matchparen
+! command! DoMatchParen runtime plugin/matchparen.vim | windo doau CursorMoved
+  
+  let &cpo = cpo_save

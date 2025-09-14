@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0014)about:internet -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+<meta http-equiv="content-language" content="en">
+<meta http-equiv="cache-control" content="no-cache">
+<meta name="author" content="Martin Toft Bay">
+<meta name="copyright" content="Copyright (c) 2007 Martin Toft Bay">
+<meta name="description" content="Martin Toft Bay&#39;s Google Summer of Code Blog (from 2007)">
+<meta name="robots" content="index,nofollow,noarchive">
+<link rel="stylesheet" href="style.css" type="text/css">
+<title>gsoc.martintoft.dk</title>
+</head>
+<body>
+<table class="outer">
+<tbody><tr><td>
+<table class="inner">
+<tbody><tr><td>
+<h2><a href="https://martintoft.dk/">Martin Toft Bay</a>'s</h2>
+<h1>Google Summer of Code Blog (from 2007)</h1>
+<table class="links">
+<tbody><tr><td>
+<a href="https://martintoft.dk">Contact</a>
+<a href="https://summerofcode.withgoogle.com">GSoC</a>
+<a href="https://www.vim.org">Vim</a>
+</td></tr>
+</tbody></table>
+<p class="date">Friday, July 6, 2007</p>
+<h3>It's alive!</h3>
+<p>
+Now nothing will stop you from going absolutely crazy with highlights in Vim:
+</p>
+<p class="centered">
+<img src="it_is_alive.jpg" alt="It&#39;s alive!">
+</p><p>
+As hinted in my previous post, the bug
+</p>
+<ul>
+<li><i>Allow more than 3 ":match" items.</i></li>
+</ul>
+<p>
+turned out to be more of a feature addition than a bug. The limit was literally
+hardcoded everywhere in the Vim source code and major changes were unavoidable.
+I have implemented the functionality as functions, as it will be used mostly by
+scripts (probably). Example of usage:
+</p>
+<pre>:highlight MyGroup1 ctermfg=yellow ctermbg=blue
+:highlight MyGroup2 ctermfg=white ctermbg=red
+:let m1 = matchadd("MyGroup1", "TODO")
+:let m2 = matchadd("MyGroup2", "FIXME")
+:call matchdelete(m1)
+:call matchdelete(m2)
+</pre>
+<p>
+I still need to change the underlying code for the old :match command, so it
+will use the new data structures transparently. Also, I plan to create a
+matchlist function and to write some tests for all this new stuff in Vim's
+testdir.
+</p>
+<h3 class="other">All posts</h3>
+<p>
+2007-08-03 - <a href="index.html">What I've fixed since the previous post</a><br>
+2007-07-06 - <a href="post3.html">It's alive!</a><br>
+2007-07-05 - <a href="post2.html">Finally I'm hacking!</a><br>
+2007-04-16 - <a href="post1.html">First post</a>
+</p>
+<hr>
+<p class="footer">
+Copyright (c) 2007 Martin Toft Bay &lt;mt@martintoft.dk&gt;
+</p>
+</td></tr>
+</tbody></table>
+</td></tr>
+</tbody></table>
+
+
+</body></html>

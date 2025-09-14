@@ -1,0 +1,117 @@
+Fixes this bug:
+
+    Omni completion takes the wrong structure for variable arguments.  (Bill
+    McCarthy, 2007 Feb 18)
+
+The text is quite unclear but luckily the mail archives remember -- see this
+thread:  http://marc.info/?t=117182868600002&r=1&w=2
+
+The following code demonstrates the problem:
+
+    typedef struct A
+    {
+        int a1;
+        int a2;
+        int a3;
+    } A;
+
+    typedef struct B
+    {
+        int b1;
+        int b2;
+        int b3;
+    } B;
+
+    void myfunc(A *a, B *b)
+    {
+        b->    /* Typing <ctrl-x><ctrl-o> here will make Vim suggest
+                  elements from structure A. */
+    }
+
+The script for C omni completion cannot handle multiple variable declarations
+on the same line.  This patch puts in the necessary handling for multiple
+variable declarations on the same line.  First, if the line contains a
+semicolon before the variable name, the last semicolon before the name is found
+and everything preceding it on the line, including itself, is removed.  This
+leaves only the relevant declaration for later matching.  Second, if the line
+contains a comma before the variable name, the last comma before the name is
+found and, if the variable has its type next to it, everything preceding the
+comma on the line, including the comma itself, is removed.  This last part
+applies to variable declarations inside a function declaration (the situation
+demonstrated by the bug report).
+
+The approach is very robust and handles e.g.:
+
+    A a; B b;
+    A a, b; B c;
+    A a; B b, c;
+    A a, b; B c, d;
+    void func(A a, B b)
+    void func(A a, B b) /* comment */
+    void func(A a, B b) // comment
+    void func(A a, B b) { /* comment */
+    void func(A a, B b) { // comment
+    void func(A a, B b, /* comment */
+              C c) { /* comment */
+
+It only fails when "searchdecl()" doesn't find the correct row or column for
+the declaration.  This typically happens when a comment next to the declaration
+mentions the variable's name.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: runtime/autoload/ccomplete.vim
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/autoload/ccomplete.vim,v
+retrieving revision 1.20
+diff -c -r1.20 ccomplete.vim
+*** runtime/autoload/ccomplete.vim	13 May 2006 09:09:15 -0000	1.20
+--- runtime/autoload/ccomplete.vim	30 Aug 2007 00:33:18 -0000
+***************
+*** 1,7 ****
+  " Vim completion script
+  " Language:	C
+  " Maintainer:	Bram Moolenaar <Bram@vim.org>
+! " Last Change:	2006 May 08
+  
+  
+  " This function is used for the 'omnifunc' option.
+--- 1,7 ----
+  " Vim completion script
+  " Language:	C
+  " Maintainer:	Bram Moolenaar <Bram@vim.org>
+! " Last Change:	2007 Aug 30
+  
+  
+  " This function is used for the 'omnifunc' option.
+***************
+*** 119,124 ****
+--- 119,145 ----
+      " TODO: join previous line if it makes sense
+      let line = getline('.')
+      let col = col('.')
++     if stridx(strpart(line, 0, col), ';') != -1
++       " Handle multiple declarations on the same line.
++       let col2 = col - 1
++       while line[col2] != ';'
++ 	let col2 -= 1
++       endwhile
++       let line = strpart(line, col2 + 1)
++       let col -= col2
++     endif
++     if stridx(strpart(line, 0, col), ',') != -1
++       " Handle multiple declarations on the same line in a function
++       " declaration.
++       let col2 = col - 1
++       while line[col2] != ','
++ 	let col2 -= 1
++       endwhile
++       if strpart(line, col2 + 1, col - col2 - 1) =~ ' *[^ ][^ ]*  *[^ ]'
++ 	let line = strpart(line, col2 + 1)
++ 	let col -= col2
++       endif
++     endif
+      if len(items) == 1
+        " Completing one word and it's a local variable: May add '[', '.' or
+        " '->'.

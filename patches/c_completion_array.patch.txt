@@ -1,0 +1,56 @@
+Fixes this bug:
+
+    C completion: doesn't work after aa[0]->, where aa is an array of
+    structures.  (W. de Hoog, 2006 Aug 12)
+
+If one types 'aa[0]-><Tab>', the list "items" in
+runtime/autoload/ccomplete.vim:ccomplete#Complete() gets the value
+['aa', '[0]', ''].  items[1:] is then used as lead for the script function
+s:Nextitem(), but this is wrong, as the element '[0]' then becomes a part of
+the lead.  This patch fixes it by always using the last element in items as
+lead, items[-1].
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: runtime/autoload/ccomplete.vim
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/autoload/ccomplete.vim,v
+retrieving revision 1.20
+diff -c -r1.20 ccomplete.vim
+*** runtime/autoload/ccomplete.vim	13 May 2006 09:09:15 -0000	1.20
+--- runtime/autoload/ccomplete.vim	18 Aug 2007 22:48:53 -0000
+***************
+*** 1,7 ****
+  " Vim completion script
+  " Language:	C
+  " Maintainer:	Bram Moolenaar <Bram@vim.org>
+! " Last Change:	2006 May 08
+  
+  
+  " This function is used for the 'omnifunc' option.
+--- 1,7 ----
+  " Vim completion script
+  " Language:	C
+  " Maintainer:	Bram Moolenaar <Bram@vim.org>
+! " Last Change:	2007 Aug 19
+  
+  
+  " This function is used for the 'omnifunc' option.
+***************
+*** 140,146 ****
+        let res = [{'match': match, 'tagline' : '', 'kind' : kind, 'info' : line}]
+      else
+        " Completing "var.", "var.something", etc.
+!       let res = s:Nextitem(strpart(line, 0, col), items[1:], 0, 1)
+      endif
+    endif
+  
+--- 140,146 ----
+        let res = [{'match': match, 'tagline' : '', 'kind' : kind, 'info' : line}]
+      else
+        " Completing "var.", "var.something", etc.
+!       let res = s:Nextitem(strpart(line, 0, col), items[-1], 0, 1)
+      endif
+    endif
+  

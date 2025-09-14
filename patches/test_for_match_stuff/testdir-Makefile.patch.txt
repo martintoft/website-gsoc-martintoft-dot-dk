@@ -1,0 +1,32 @@
+*** src/testdir/Makefile.orig	Mon Jul 16 22:45:41 2007
+--- src/testdir/Makefile	Sat Jul 14 15:58:22 2007
+***************
+*** 1,5 ****
+  #
+! # Makefile to run al tests for Vim
+  #
+  
+  VIMPROG = ../vim
+--- 1,5 ----
+  #
+! # Makefile to run all tests for Vim
+  #
+  
+  VIMPROG = ../vim
+***************
+*** 15,21 ****
+  		test43.out test44.out test45.out test46.out test47.out \
+  		test48.out test49.out test51.out test52.out test53.out \
+  		test54.out test55.out test56.out test57.out test58.out \
+! 		test59.out test60.out test61.out test62.out
+  
+  SCRIPTS_GUI = test16.out
+  
+--- 15,21 ----
+  		test43.out test44.out test45.out test46.out test47.out \
+  		test48.out test49.out test51.out test52.out test53.out \
+  		test54.out test55.out test56.out test57.out test58.out \
+! 		test59.out test60.out test61.out test62.out test63.out
+  
+  SCRIPTS_GUI = test16.out
+  

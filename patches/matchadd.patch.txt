@@ -1,0 +1,51 @@
+Fixes a bug in a previous patch of mine, more_than_3_match_items.patch.txt,
+reported by David Larson (davidlarson at ti dot com) on the Vim development
+mailing list, July 26, 2007.  The report:
+
+    matchadd() produces a runtime error. To reproduce:
+
+    :highlight MyGroup ctermbg=green guibg=green
+    :let m = matchadd("MyGroup", "TODO")
+    :let m = matchadd("MyGroup", "name")
+
+    E685: Internal error: get_tv_number()
+
+I didn't discover the bug while writing the original patch, as the bug only
+occurs on my machine when running gvim and not compiling with -g.
+
+Solution: In matchadd(), check the third argument to be present before using
+the fourth argument.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/eval.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/eval.c,v
+retrieving revision 1.220
+diff -c -r1.220 eval.c
+*** src/eval.c	26 Jul 2007 20:58:42 -0000	1.220
+--- src/eval.c	27 Jul 2007 14:55:54 -0000
+***************
+*** 12526,12534 ****
+      if (grp == NULL || pat == NULL)
+  	return;
+      if (argvars[2].v_type != VAR_UNKNOWN)
+  	prio = get_tv_number_chk(&argvars[2], &error);
+!     if (argvars[3].v_type != VAR_UNKNOWN)
+! 	id = get_tv_number_chk(&argvars[3], &error);
+      if (error == TRUE)
+  	return;
+      if (id >= 1 && id <= 3)
+--- 12526,12536 ----
+      if (grp == NULL || pat == NULL)
+  	return;
+      if (argvars[2].v_type != VAR_UNKNOWN)
++     {
+  	prio = get_tv_number_chk(&argvars[2], &error);
+! 	if (argvars[3].v_type != VAR_UNKNOWN)
+! 	    id = get_tv_number_chk(&argvars[3], &error);
+!     }
+      if (error == TRUE)
+  	return;
+      if (id >= 1 && id <= 3)

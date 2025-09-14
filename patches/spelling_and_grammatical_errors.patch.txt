@@ -1,0 +1,236 @@
+Some spelling and grammatical errors.  I am to blame for most of them :-)
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/Make_mint.mak
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/Make_mint.mak,v
+retrieving revision 1.1
+diff -c -r1.1 Make_mint.mak
+*** src/Make_mint.mak	13 Jun 2004 15:43:57 -0000	1.1
+--- src/Make_mint.mak	18 Aug 2007 11:33:43 -0000
+***************
+*** 11,17 ****
+  # Otherwise the postprocessing won't get done.
+  #
+  
+! ### This Makefile has been succesfully tested on these systems.
+  ### Check the (*) column for remarks, listed below.
+  ### Later code changes may cause small problems, otherwise Vim is supposed to
+  ### compile and run without problems.
+--- 11,17 ----
+  # Otherwise the postprocessing won't get done.
+  #
+  
+! ### This Makefile has been successfully tested on these systems.
+  ### Check the (*) column for remarks, listed below.
+  ### Later code changes may cause small problems, otherwise Vim is supposed to
+  ### compile and run without problems.
+
+
+Index: src/Make_os2.mak
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/Make_os2.mak,v
+retrieving revision 1.6
+diff -c -r1.6 Make_os2.mak
+*** src/Make_os2.mak	24 Mar 2006 22:08:05 -0000	1.6
+--- src/Make_os2.mak	18 Aug 2007 11:33:43 -0000
+***************
+*** 4,10 ****
+  # Created by: Paul Slootman
+  #
+  
+! ### This Makefile has been succesfully tested on these systems.
+  ### Check the (*) column for remarks, listed below.
+  ### Later code changes may cause small problems, otherwise Vim is supposed to
+  ### compile and run without problems.
+--- 4,10 ----
+  # Created by: Paul Slootman
+  #
+  
+! ### This Makefile has been successfully tested on these systems.
+  ### Check the (*) column for remarks, listed below.
+  ### Later code changes may cause small problems, otherwise Vim is supposed to
+  ### compile and run without problems.
+
+
+Index: src/ex_cmds.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/ex_cmds.c,v
+retrieving revision 1.93
+diff -c -r1.93 ex_cmds.c
+*** src/ex_cmds.c	25 Jul 2007 20:56:39 -0000	1.93
+--- src/ex_cmds.c	18 Aug 2007 11:33:46 -0000
+***************
+*** 2974,2980 ****
+   * 'fnum' is the number of the file, if zero use ffname/sfname.
+   *
+   * Return 1 for "normal" error, 2 for "not written" error, 0 for success
+!  * -1 for succesfully opening another file.
+   * 'lnum' is the line number for the cursor in the new file (if non-zero).
+   */
+      int
+--- 2974,2980 ----
+   * 'fnum' is the number of the file, if zero use ffname/sfname.
+   *
+   * Return 1 for "normal" error, 2 for "not written" error, 0 for success
+!  * -1 for successfully opening another file.
+   * 'lnum' is the line number for the cursor in the new file (if non-zero).
+   */
+      int
+
+
+Index: src/os_unix.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/os_unix.c,v
+retrieving revision 1.72
+diff -c -r1.72 os_unix.c
+*** src/os_unix.c	11 Aug 2007 20:23:53 -0000	1.72
+--- src/os_unix.c	18 Aug 2007 11:33:51 -0000
+***************
+*** 5688,5694 ****
+  
+  /*
+   * Closes connection to gpm
+!  * returns non-zero if connection succesfully closed
+   */
+      static void
+  gpm_close()
+--- 5688,5694 ----
+  
+  /*
+   * Closes connection to gpm
+!  * returns non-zero if connection successfully closed
+   */
+      static void
+  gpm_close()
+
+
+Index: src/testdir/test63.in
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/testdir/test63.in,v
+retrieving revision 1.2
+diff -c -r1.2 test63.in
+*** src/testdir/test63.in	26 Jul 2007 20:57:25 -0000	1.2
+--- src/testdir/test63.in	18 Aug 2007 11:33:53 -0000
+***************
+*** 60,66 ****
+  :else
+  :  let @r .= "FAILED\n"
+  :endif
+! :" --- Check that "matchdelete()" returns 0 if succesfull and otherwise -1.
+  :let @r .= "*** Test 6: "
+  :let m = matchadd("MyGroup1", "TODO")
+  :let r1 = matchdelete(m)
+--- 60,66 ----
+  :else
+  :  let @r .= "FAILED\n"
+  :endif
+! :" --- Check that "matchdelete()" returns 0 if successful and otherwise -1.
+  :let @r .= "*** Test 6: "
+  :let m = matchadd("MyGroup1", "TODO")
+  :let r1 = matchdelete(m)
+***************
+*** 117,123 ****
+  :" --- Check that "setmatches()" will not add two matches with the same ID. The
+  :" --- expected behaviour (for now) is to add the first match but not the
+  :" --- second and to return 0 (even though it is a matter of debate whether
+! :" --- this can be considered succesfull behaviour).
+  :let @r .= "*** Test 9: "
+  :let r1 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}])
+  :if getmatches() == [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}] && r1 == 0
+--- 117,123 ----
+  :" --- Check that "setmatches()" will not add two matches with the same ID. The
+  :" --- expected behaviour (for now) is to add the first match but not the
+  :" --- second and to return 0 (even though it is a matter of debate whether
+! :" --- this can be considered successful behaviour).
+  :let @r .= "*** Test 9: "
+  :let r1 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}])
+  :if getmatches() == [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}] && r1 == 0
+***************
+*** 127,133 ****
+  :endif
+  :call clearmatches()
+  :unlet r1
+! :" --- Check that "setmatches()" returns 0 if succesfull and otherwise -1.
+  :" --- (A range of valid and invalid input values are tried out to generate the
+  :" --- return values.)
+  :let @r .= "*** Test 10: "
+--- 127,133 ----
+  :endif
+  :call clearmatches()
+  :unlet r1
+! :" --- Check that "setmatches()" returns 0 if successful and otherwise -1.
+  :" --- (A range of valid and invalid input values are tried out to generate the
+  :" --- return values.)
+  :let @r .= "*** Test 10: "
+
+
+Index: runtime/doc/eval.txt
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/doc/eval.txt,v
+retrieving revision 1.164
+diff -c -r1.164 eval.txt
+*** runtime/doc/eval.txt	26 Jul 2007 20:57:59 -0000	1.164
+--- runtime/doc/eval.txt	18 Aug 2007 11:33:55 -0000
+***************
+*** 3707,3713 ****
+  
+  matchdelete({id})			       *matchdelete()* *E802* *E803*
+  		Deletes a match with ID {id} previously defined by |matchadd()|
+! 		or one of the |:match| commands.  Returns 0 if succesfull,
+  		otherwise -1.  See example for |matchadd()|.  All matches can
+  		be deleted in one operation by |clearmatches()|.
+  
+--- 3707,3713 ----
+  
+  matchdelete({id})			       *matchdelete()* *E802* *E803*
+  		Deletes a match with ID {id} previously defined by |matchadd()|
+! 		or one of the |:match| commands.  Returns 0 if successful,
+  		otherwise -1.  See example for |matchadd()|.  All matches can
+  		be deleted in one operation by |clearmatches()|.
+  
+***************
+*** 4467,4473 ****
+  
+  setmatches({list})					*setmatches()*
+  		Restores a list of matches saved by |getmatches()|.  Returns 0
+! 		if succesfull, otherwise -1.  All current matches are cleared
+  		before the list is restored.  See example for |getmatches()|.
+  
+  							*setpos()*
+--- 4467,4473 ----
+  
+  setmatches({list})					*setmatches()*
+  		Restores a list of matches saved by |getmatches()|.  Returns 0
+! 		if successful, otherwise -1.  All current matches are cleared
+  		before the list is restored.  See example for |getmatches()|.
+  
+  							*setpos()*
+
+
+Index: runtime/doc/windows.txt
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/doc/windows.txt,v
+retrieving revision 1.29
+diff -c -r1.29 windows.txt
+*** runtime/doc/windows.txt	12 Aug 2007 14:55:56 -0000	1.29
+--- runtime/doc/windows.txt	18 Aug 2007 11:33:56 -0000
+***************
+*** 146,152 ****
+  		1. a width was not specified,
+  		2. 'equalalways' is set,
+  		3. 'eadirection' isn't "ver", and
+! 		4. one of the other windows are wider than the current or new
+  		   window.
+  		Note: In other places CTRL-Q does the same as CTRL-V, but here
+  		it doesn't!
+--- 146,152 ----
+  		1. a width was not specified,
+  		2. 'equalalways' is set,
+  		3. 'eadirection' isn't "ver", and
+! 		4. one of the other windows is wider than the current or new
+  		   window.
+  		Note: In other places CTRL-Q does the same as CTRL-V, but here
+  		it doesn't!

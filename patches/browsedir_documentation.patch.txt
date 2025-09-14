@@ -1,0 +1,47 @@
+Addresses this bug report:
+
+    GTK: 'bsdir' doesn't work.  Sometimes get a "gtk critical error".  Moved
+    some code to append file name to further down in gui_gtk.c
+    gui_mch_browse(), but "last" value of 'bsdir' still doesn't work.
+
+I cannot reproduce the bug -- I never get a "gtk critical error" and the "last"
+value of 'bsdir' works.  The last directory remembered by the file browser is
+only updated when a file is opened or saved, and I think this what confuses the
+author of the report.  If one just opens the file browser, changes to another
+directory, and then clicks "Cancel", the remembered last directory isn't
+changed.  Looking at the code (message.c:do_browse, gui_gtk.c:gui_mch_browse
+and gui_gtk.c:gui_mch_browsedir), I see this behaviour is by design, as the
+returned file name from the dialog is simply NULL if a file isn't opened or
+saved.  The remembered last directory is taken from the returned file name,
+which is of course not possible if the file name is NULL.  I think the correct
+solution is to update the 'bsdir' documentation, such that this behaviour of
+the "last" value is clear.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: runtime/doc/options.txt
+===================================================================
+RCS file: /cvsroot/vim/vim7/runtime/doc/options.txt,v
+retrieving revision 1.139
+diff -c -r1.139 options.txt
+*** runtime/doc/options.txt	12 May 2007 14:27:04 -0000	1.139
+--- runtime/doc/options.txt	8 Aug 2007 22:54:31 -0000
+***************
+*** 1150,1156 ****
+  			global
+  			{not in Vi} {only for Motif and Win32 GUI}
+  	Which directory to use for the file browser:
+! 	   last		Use same directory as with last file browser.
+  	   buffer	Use the directory of the related buffer.
+  	   current	Use the current directory.
+  	   {path}	Use the specified directory
+--- 1150,1157 ----
+  			global
+  			{not in Vi} {only for Motif and Win32 GUI}
+  	Which directory to use for the file browser:
+! 	   last		Use same directory as with last file browser (only
+! 			updated when a file is opened or saved).
+  	   buffer	Use the directory of the related buffer.
+  	   current	Use the current directory.
+  	   {path}	Use the specified directory

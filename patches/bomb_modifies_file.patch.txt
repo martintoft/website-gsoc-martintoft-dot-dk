@@ -1,0 +1,155 @@
+Fixes this bug:
+
+    When 'bomb' is set or reset the file should be considered modified. (Tony
+    Mechelynck)  Handle like 'endofline'.
+
+A simple patch, which adds the local buffer variable 'b_start_bomb' and handles
+'bomb' sets/resets in the same way as 'endofline' is handled.
+
+Created by Martin Toft Bay <mt@martintoft.dk> during Google Summer of Code 2007.
+
+
+Index: src/buffer.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/buffer.c,v
+retrieving revision 1.73
+diff -c -r1.73 buffer.c
+*** src/buffer.c	19 Jun 2007 13:36:21 -0000	1.73
+--- src/buffer.c	29 Jul 2007 18:31:49 -0000
+***************
+*** 502,507 ****
+--- 502,508 ----
+      buf->b_start_eol = TRUE;
+  #ifdef FEAT_MBYTE
+      buf->b_p_bomb = FALSE;
++     buf->b_start_bomb = FALSE;
+  #endif
+      buf->b_ml.ml_mfp = NULL;
+      buf->b_ml.ml_flags = ML_EMPTY;		/* empty buffer */
+
+
+Index: src/fileio.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/fileio.c,v
+retrieving revision 1.104
+diff -c -r1.104 fileio.c
+*** src/fileio.c	10 Jul 2007 15:10:29 -0000	1.104
+--- src/fileio.c	29 Jul 2007 18:31:52 -0000
+***************
+*** 654,659 ****
+--- 654,660 ----
+  	curbuf->b_start_eol = TRUE;
+  #ifdef FEAT_MBYTE
+  	curbuf->b_p_bomb = FALSE;
++ 	curbuf->b_start_bomb = FALSE;
+  #endif
+      }
+  
+***************
+*** 912,918 ****
+--- 913,922 ----
+  	file_rewind = FALSE;
+  #ifdef FEAT_MBYTE
+  	if (set_options)
++ 	{
+  	    curbuf->b_p_bomb = FALSE;
++ 	    curbuf->b_start_bomb = FALSE;
++ 	}
+  	conv_error = 0;
+  #endif
+      }
+***************
+*** 1361,1367 ****
+--- 1365,1374 ----
+  		    size -= blen;
+  		    mch_memmove(ptr, ptr + blen, (size_t)size);
+  		    if (set_options)
++ 		    {
+  			curbuf->b_p_bomb = TRUE;
++ 			curbuf->b_start_bomb = TRUE;
++ 		    }
+  		}
+  
+  		if (fio_flags == FIO_UCSBOM)
+
+
+Index: src/option.c
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/option.c,v
+retrieving revision 1.125
+diff -c -r1.125 option.c
+*** src/option.c	24 Jul 2007 12:58:01 -0000	1.125
+--- src/option.c	29 Jul 2007 18:31:55 -0000
+***************
+*** 7118,7123 ****
+--- 7118,7128 ----
+      /* when 'endofline' is changed, redraw the window title */
+      else if ((int *)varp == &curbuf->b_p_eol)
+  	need_maketitle = TRUE;
++ #ifdef FEAT_MBYTE
++     /* when 'bomb' is changed, redraw the window title */
++     else if ((int *)varp == &curbuf->b_p_bomb)
++ 	need_maketitle = TRUE;
++ #endif
+  #endif
+  
+      /* when 'bin' is set also set some other options */
+***************
+*** 10604,10609 ****
+--- 10609,10616 ----
+      buf->b_start_ffc = *buf->b_p_ff;
+      buf->b_start_eol = buf->b_p_eol;
+  #ifdef FEAT_MBYTE
++     buf->b_start_bomb = buf->b_p_bomb;
++ 
+      /* Only use free/alloc when necessary, they take time. */
+      if (buf->b_start_fenc == NULL
+  			     || STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0)
+***************
+*** 10617,10623 ****
+  /*
+   * Return TRUE if 'fileformat' and/or 'fileencoding' has a different value
+   * from when editing started (save_file_ff() called).
+!  * Also when 'endofline' was changed and 'binary' is set.
+   * Don't consider a new, empty buffer to be changed.
+   */
+      int
+--- 10624,10631 ----
+  /*
+   * Return TRUE if 'fileformat' and/or 'fileencoding' has a different value
+   * from when editing started (save_file_ff() called).
+!  * Also when 'endofline' was changed and 'binary' is set, or when 'bomb' was
+!  * changed and 'binary' is not set.
+   * Don't consider a new, empty buffer to be changed.
+   */
+      int
+***************
+*** 10636,10641 ****
+--- 10644,10651 ----
+      if (buf->b_p_bin && buf->b_start_eol != buf->b_p_eol)
+  	return TRUE;
+  #ifdef FEAT_MBYTE
++     if (!buf->b_p_bin && buf->b_start_bomb != buf->b_p_bomb)
++ 	return TRUE;
+      if (buf->b_start_fenc == NULL)
+  	return (*buf->b_p_fenc != NUL);
+      return (STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0);
+
+
+Index: src/structs.h
+===================================================================
+RCS file: /cvsroot/vim/vim7/src/structs.h,v
+retrieving revision 1.75
+diff -c -r1.75 structs.h
+*** src/structs.h	26 Jul 2007 20:58:04 -0000	1.75
+--- src/structs.h	29 Jul 2007 18:31:59 -0000
+***************
+*** 1453,1458 ****
+--- 1453,1459 ----
+  #ifdef FEAT_MBYTE
+      char_u	*b_start_fenc;	/* 'fileencoding' when edit started or NULL */
+      int		b_bad_char;	/* "++bad=" argument when edit started or 0 */
++     int		b_start_bomb;	/* 'bomb' when it was read */
+  #endif
+  
+  #ifdef FEAT_EVAL

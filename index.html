@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0014)about:internet -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+<meta http-equiv="content-language" content="en">
+<meta http-equiv="cache-control" content="no-cache">
+<meta name="author" content="Martin Toft Bay">
+<meta name="copyright" content="Copyright (c) 2007 Martin Toft Bay">
+<meta name="description" content="Martin Toft Bay&#39;s Google Summer of Code Blog (from 2007)">
+<meta name="robots" content="index,nofollow,noarchive">
+<link rel="stylesheet" href="style.css" type="text/css">
+<title>gsoc.martintoft.dk</title>
+</head>
+<body>
+<table class="outer">
+<tbody><tr><td>
+<table class="inner">
+<tbody><tr><td>
+<h2><a href="https://martintoft.dk/">Martin Toft Bay</a>'s</h2>
+<h1>Google Summer of Code Blog (from 2007)</h1>
+<table class="links">
+<tbody><tr><td>
+<a href="https://martintoft.dk">Contact</a>
+<a href="https://summerofcode.withgoogle.com">GSoC</a>
+<a href="https://www.vim.org">Vim</a>
+</td></tr>
+</tbody></table>
+<p class="date">Friday, August 3, 2007</p>
+<h3>What I've fixed since the previous post</h3>
+<p>
+Welcome dear reader! I'm not using this blog as actively as I had imagined, but
+here is an update of what I have been fixing since last post.
+</p>
+<p>
+I link to my patches, but please don't download and try to use them. This may
+sound silly, as I should want people to test my patches, but there is a good
+reason. The patches linked to here are the patches that I've sent to Bram.
+Sometimes (almost always, hehe) Bram tells me that he has changed something
+before committing a patch, and I don't "backport" those changes to
+the files on this site.  Unless you know what you are doing, you should wait
+for my patches to find their way into the <a href="https://www.vim.org/download.php">official Vim repository</a>.
+<b>(<a href="https://github.com/vim/vim/blob/542cc4b35c1dba35634e3ee22081f267153186d0/runtime/doc/version7.txt">They have now</a> - search for "Toft)").</b>
+</p><p>
+<br><b>Allow more than three ":match" items</b>
+</p>
+<p>
+I was working on this bug when I wrote my <a href="post3.html">last post</a>,
+but it grew a lot bigger than planned.  Five functions were implemented:
+matchadd(), matchdelete(), getmatches(), setmatches(), and clearmatches(). The
+huge patch is accessible <a href="patches/more_than_3_match_items.patch.txt">here</a> (43 kB).  I also
+wrote a <a href="patches/test_for_match_stuff/">test</a> for the new
+functionality.
+</p>
+<p>
+The patch took quite some time to complete, and to help me remember things, I
+started putting up paper notes on the walls of my apartment :-) Just one of
+those crazy moments I guess...
+</p>
+<p class="centered">
+<a href="paper_notes_20070706.jpg"><img src="paper_notes_20070706_resized.jpg" alt="Paper notes"></a><br>
+(click on the picture to enlarge)
+</p>
+<p>
+On July 26 the patch was <a href="https://github.com/vim/vim/blob/542cc4b35c1dba35634e3ee22081f267153186d0/runtime/doc/version7.txt#L5019-L5042">committed</a>, after which
+David Larson (davidlarson at ti dot com) found a <a href="https://groups.google.com/group/vim_dev/msg/26cf01fa84d29fff">serious
+error</a> in the matchadd() function. Damn that hurt :-) Even though I couldn't
+reproduce the error while compiling with -g (for debugging), I quickly came up
+with a <a href="patches/matchadd.patch.txt">patch</a> on July 27. I just had to
+accept the fact that I'm not perfect, hehe... On July 31, that was made clear
+again, when it was <a href="https://groups.google.com/group/vim_dev/msg/601002db1e7e0a77">pointed
+out</a> that I had added spelling errors to Vim's otherwise perfect
+documentation (by the way -- thanks!).
+</p>
+<p>
+<br><b>Use last search pattern for ":sort"</b>
+</p>
+<p>
+Like many of my patches, this one leans more toward a feature addition than an
+error correction. Sometimes it's impossible to classify the bug reports before
+trying to solve them, especially when you are not a Vim power user and don't
+have experience with all of Vim's commands and functions.
+</p>
+<p>
+As the headline says, the patch makes the ":sort" command use the
+last search pattern when it is given an empty sort pattern. This allows for
+trying out a pattern first before using it for sorting. Example:
+</p>
+<ul>
+<li>Search for pattern x by typing /x&lt;enter&gt;</li>
+<li>Use pattern x for sorting: &nbsp;<tt>:sort //</tt></li>
+</ul>
+<p>
+The patch was <a href="https://github.com/vim/vim/blob/542cc4b35c1dba35634e3ee22081f267153186d0/runtime/doc/version7.txt#L4947-L4951">committed</a> on July 10.
+My <a href="patches/last_search_pattern_for_sort.patch.txt">on-this-site
+version</a>.
+</p>
+<p>
+<br><b>More-prompt skipped</b>
+</p>
+<p>
+This was an evil bug, taking me over ten hours to find using <a href="https://www.gnu.org/software/gdb/">gdb</a>. The original bug report:
+</p>
+<ul>
+<li>More-prompt is skipped when doing this; (Randall W. Morris, Jun 17)<br>
+&nbsp;&nbsp;:au<br>
+&nbsp;&nbsp;&lt;Space&gt;<br>
+&nbsp;&nbsp;b<br>
+&nbsp;&nbsp;&lt;Space&gt;</li>
+</ul>
+<p>
+The more-prompt in action:
+</p>
+<p class="centered">
+<img src="more_prompt.jpg" alt="More-prompt in action">
+</p><p>
+It turns out that the chance of experiencing this bug is high -- a lot of other
+key sequences besides the one mentioned trigger it, and the more-prompt is
+used whenever a listing doesn't fit on the screen, i.e. ":version",
+":ls", ":highlight" and many others are affected. 
+</p>
+<p>
+As the output for a listing will only be generated once, Vim uses a complex
+scroll system to remember the lines that have been generated. My <a href="patches/more_prompt_skipped.patch.txt">patch</a> corrects a crucial
+conditional in this system, which decides whether or not to show the
+more-prompt. Incorrectly, the more-prompt will not be shown if we are at the
+end of the saved scroll list part, causing a chain reaction where all lines 
+scroll by until the bottom is reached. The patch still awaits commit.
+</p>
+<p>
+<br><b>Thesaurus infercase bug</b>
+</p>
+<p>
+Before attacking this bug, I didn't even know that Vim had thesaurus
+capabilities :-) Just set the 'thesaurus' option to a file containing lines
+with synonymous words and you're up and running. Type
+&lt;ctrl-x&gt;&lt;ctrl-t&gt; to query the thesaurus. See ":help
+'thesaurus'" for more information.
+</p>
+<p>
+Unfortunately, the thesaurus doesn't work properly when 'infercase' set. If you
+want to try any of the following, remember to also set 'ignorecase', as
+'infercase' depends on it. I have a simple one-line thesaurus with "angry
+furious mad enraged". Typing Ang&lt;ctrl-x&gt;&lt;ctrl-t&gt; gives some
+broken suggestions:
+</p>
+<p class="centered">
+<img src="thesaurus_infercase_bug_before.jpg" alt="Thesaurus infercase bug
+(before)">
+</p>
+<p>
+After some code reading and debugging, I found out that the case of the
+suggestions' first part was inferred by simply copying the typed part
+("Ang"). This is fine for ordinary word completion but wrong for
+thesaurus completion. I wrote a small, simple patch fixing the problem and sent
+it to Bram. Bram quickly responded with something like "but your patch
+doesn't support multi-byte characters!". The truth is that I intentionally
+didn't make a multi-byte supporting patch, as the whole 'infercase' feature
+didn't support it, so it wouldn't matter whether my small contribution did. The
+relevant function had this fine comment:
+</p>
+<pre>...
+* TODO: make this work for multi-byte characters.
+*/
+</pre>
+<p>
+I felt, however, that I had to do the job properly and decided to make the
+whole thing work for multi-byte characters. As we say in Danish: "Det er
+det de unge vil ha!" ("That's what the youth demands!"). This
+turned out to be a completely new experience for me, as I hadn't used a
+multi-byte character set on any of my computers before.
+</p>
+<p>
+The patch is available <a href="patches/thesaurus_infercase_and_mbyte.patch.txt">here</a>. It hasn't been
+committed yet. With the patch applied, 'infercase' of thesaurus completion is
+now correct:
+</p>
+<p class="centered">
+<img src="thesaurus_infercase_bug_after.jpg" alt="Thesaurus infercase bug
+(after)">
+</p>
+<p>
+<br><b>Thesaurus missing suggestions</b>
+</p>
+<p>
+While messing around with the thesaurus, I found another annoying bug on my
+own. In the line of a thesaurus file, only the word matching the typed part and
+the ones after it are suggested. Here is an example where I have the line
+"angry furious mad enraged" again, but "angry" is not
+suggested when typing fur&lt;ctrl-x&gt;&lt;ctrl-t&gt;:
+</p>
+<p class="centered">
+<img src="thesaurus_missing_suggestions_before.jpg" alt="Thesaurus missing
+suggestions (before)">
+</p>
+<p>
+The problem was simple to patch -- I just changed the line scanning to begin
+from the start of the line. With the patch applied:
+</p>
+<p class="centered">
+<img src="thesaurus_missing_suggestions_after.jpg" alt="Thesaurus missing
+suggestions (after)">
+</p>
+<p>
+Like the other thesaurus patch, <a href="patches/thesaurus_missing_suggestions.patch.txt">my patch for this
+problem</a> hasn't been committed yet.
+</p>
+<p>
+<br><b>'bomb' modifies file</b>
+</p>
+<p>
+When writing a file, the 'bomb' option of Vim specifies whether a so-called BOM
+should be prepended. BOM is an abbreviation for "Byte Order Mark",
+and it is used by some applications to recognise the encoding of a file.
+</p>
+<p>
+The bug report was
+</p>
+<ul>
+<li>When 'bomb' is set or reset the file should be considered modified. (Tony
+Mechelynck) Handle like 'endofline'.</li>
+</ul>
+<p>
+and I have fixed it just like report suggests. If a user changes the 'bomb'
+option to the opposite value of what it was when a file was opened, the file
+will be marked as modified. The <a href="patches/bomb_modifies_file.patch.txt">patch</a> hasn't been committed
+yet.
+</p>
+<p>
+<br><b>'rightleft' completion menu</b>
+</p>
+<p>
+The bug report was
+</p>
+<ul>
+<li> When 'rightleft' is set the completion menu is positioned wrong.
+(Baha-Eddine MOKADEM)</li>
+</ul>
+<p>
+which is clear at this screen shot:
+</p>
+<p class="centered">
+<img src="rightleft_completion_menu_before.jpg" alt="rightleft completion
+menu (before)">
+</p>
+<p>
+Yeah, that's one thing, I thought, but shouldn't the completion suggestions
+also be in 'rightleft' style? What you see <i>should</i> be what you get, I
+think, to borrow some words from an otherwise annoying phrase. So besides
+fixing the original position bug, I decided to also make the completion menu
+appear in 'rightleft' style when the 'rightleft' option is set. The
+"pleasing" result of this:
+</p>
+<p class="centered">
+<img src="rightleft_completion_menu_after.jpg" alt="rightleft completion
+menu (after)">
+</p>
+<p>
+It wasn't a very complicated patch to do, but it took some time, as the
+'rightleft' menu style is new functionality. I couldn't just set a magic
+variable to a particular value to make it happen. Code was indeed needed
+together with a little portion of ingenuity for the special cases with regard
+to the menu's position. Also, I had to make sure that I didn't ruin the
+original code for the ordinary (in my eyes) menu style and position.
+</p>
+<p>
+If you want to try out the 'rightleft' option, you have to compile the
+"big" version of Vim, as it isn't included in the "normal"
+version. See ":help :version" and the makefile for more information.
+</p>
+<p>
+The patch is available <a href="patches/rightleft_completion_menu.patch.txt">here</a>. It hasn't been
+committed yet.
+</p>
+<p>
+<br><b>Split window + quickfix layout problem</b>
+</p>
+<p>
+This one was really hard to crack and took me nearly 20 hours in front of gdb.
+Maybe this is the time to mention a few nice features of gdb :-) I particularly
+enjoy being able to run gdb in one window and the program being debugged in
+another. Otherwise, the user interface of Vim would clutter the debugging info
+completely, and certain user interface related bugs would be impossible to
+debug. One way to do this is to use gdb's -tty option, but you can also start
+debugging a running process by specifying its PID. I used <a href="https://www.se.rit.edu/~jrv/swguides/gdb.html">this handy guide</a> to
+refresh my knowledge about gdb. See "man gdb" for more information.
+</p>
+<p>
+By following a recipe sent to the Vim users maillist by Ming Bai and mbbill on
+July 24 (thanks!), one can end up with the following window layout in Vim:
+</p>
+<p class="centered">
+<img src="split_window_quickfix_layout_problem_before.jpg" alt="Split
+window + quickfix layout problem (before)">
+</p>
+<p>
+I have also written a version of the recipe in my <a href="patches/split_window_quickfix_layout_problem.patch.txt">patch</a> for the
+problem. It's hard to spot what's wrong with the layout, if you don't already
+know it. Three windows are shown:
+</p>
+<ol>
+<li>[No Name] with geometry 40x22+0+0 (W x H + start column + start row),</li>
+<li>[No Name] with geometry 39x11+41+0, and</li>
+<li>Quickfix List with geometry 39x10+41+6.</li>
+</ol>
+<p>
+Note the "+6" for the Quickfix List -- it overlaps the "[No
+Name]" window above it! Readers familiar with Vim should know that its
+windows aren't supposed to overlap :-) The overlapping results in a lot of
+layout problems down the road, as Vim doesn't account for overlapping windows
+when calculating the placement of objects such as the command line. Example: The
+row below the last window's frame (row 17 here due to the Quickfix List being
+last) is used for the command line, which is clear if you use the recipe to get
+into the faulty situation and type a colon.
+</p>
+<p>
+The problem is caused by a too simplistic solution for distributing free height
+and width from a closed window to a neighbour window, when 'winfixheight' or
+'winfixwidth' is involved. Actually, the comment before the relevant code hints
+it (window.c lines 2332-2334):
+</p>
+<pre>/* When 'winfixheight' is set, remember its old size and restore
+ * it later (it's a simplistic solution...).  Don't do this if the
+ * window will occupy the full height of the screen. */
+</pre>
+<p>
+When doing the last step of the recipe (closing the window containing bb.txt),
+the solution is triggered. Before reaching the solution's code, the Quickfix
+List has been chosen to get the height from the old window. The solution then
+adds the height to the frame of the Quickfix List (and thereby also to its
+window), but then explicitly sets the window's height back to its original
+value, as the Quickfix List has 'winfixheight' set. This brings the frame
+height and window height out of sync, which causes havoc later on when the
+column's frames and windows are adapted to each other.
+</p>
+<p>
+I have fixed the problem by writing a smarter solution for dealing with windows
+that have 'winfixheight' or 'winfixwidth' set. It searches the column/row
+(depending on whether we're dealing with height or width) for a non-fixed-size
+window to distribute the height/width to, and only chooses the fixed-size
+window if no non-fixed-size window could be found. It tries to pick a window as
+close to the closed window as possible. Now the recipe can no longer cause
+problems:
+</p>
+<p class="centered">
+<img src="split_window_quickfix_layout_problem_after.jpg" alt="Split
+window + quickfix layout problem (after)">
+</p>
+<p>
+The <a href="patches/split_window_quickfix_layout_problem.patch.txt">patch</a>
+still awaits commit.
+</p>
+<p>
+<br>Greetings to everyone who read this far! :-)
+</p>
+<h3 class="other">All posts</h3>
+<p>
+2007-08-03 - <a href="index.html">What I've fixed since the previous post</a><br>
+2007-07-06 - <a href="post3.html">It's alive!</a><br>
+2007-07-05 - <a href="post2.html">Finally I'm hacking!</a><br>
+2007-04-16 - <a href="post1.html">First post</a>
+</p>
+<hr>
+<p class="footer">
+Copyright (c) 2007 Martin Toft Bay &lt;mt@martintoft.dk&gt;
+</p>
+</td></tr>
+</tbody></table>
+</td></tr>
+</tbody></table>
+
+
+</body></html>
